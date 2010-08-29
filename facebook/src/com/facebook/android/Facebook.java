@@ -258,8 +258,7 @@ public class Facebook {
     
     /**
      * Synchronously make a request to the Facebook Graph API with the given
-     * HTTP method and string parameters. Note that binary data parameters 
-     * (e.g. pictures) are not yet supported by this helper function.
+     * HTTP method and string parameters.
      * 
      * See http://developers.facebook.com/docs/api
      *  
@@ -286,6 +285,38 @@ public class Facebook {
                           String httpMethod) 
           throws FileNotFoundException, IOException, URISyntaxException {
         parameters.putString("format", "json");
+        return new String(requestBinary(graphPath, parameters, httpMethod));
+    }
+
+    /**
+     * Synchronously make a request to the Facebook Graph API with the given
+     * HTTP method and string parameters. Use this method if you need to
+     * retrieve binary data (e.g. pictures)
+     * 
+     * See http://developers.facebook.com/docs/api
+     *  
+     * Note that this method blocks waiting for a network response, so do not 
+     * call it in a UI thread.
+     * 
+     * @param graphPath
+     *            Path to resource in the Facebook graph, e.g., to fetch data
+     *            about the currently logged authenticated user, provide "me",
+     *            which will fetch http://graph.facebook.com/me
+     * @param parameters
+     *            key-value string parameters, e.g. the path "search" with
+     *            parameters {"q" : "facebook"} would produce a query for the
+     *            following graph resource:
+     *            https://graph.facebook.com/search?q=facebook
+     * @param httpMethod
+     *            http verb, e.g. "GET", "POST", "DELETE"
+     * @throws IOException 
+     * @throws URISyntaxException 
+     * @return Binary server response
+     */
+    public byte[] requestBinary(String graphPath,
+                          Bundle parameters, 
+                          String httpMethod) 
+          throws FileNotFoundException, IOException, URISyntaxException {
         if (isSessionValid()) {
             parameters.putString(TOKEN, getAccessToken());
         }

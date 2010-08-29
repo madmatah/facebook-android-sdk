@@ -16,10 +16,7 @@
 
 package com.facebook.android;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -33,6 +30,7 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.ByteArrayBuffer;
+import org.apache.http.util.EntityUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -131,11 +129,11 @@ public final class Util {
      * @param url - the resource to open: must be a welformed URL
      * @param method - the HTTP method to use ("GET", "POST", etc.)
      * @param params - the query parameter for the URL (e.g. access_token=foo)
-     * @return the URL contents as a String
+     * @return the URL contents as a byte array
      * @throws IOException - if a network problem occurs
      * @throws URISyntaxException - if the URL format is invalid
      */
-    public static String openUrl(String url, String method, Bundle params) 
+    public static byte[] openUrl(String url, String method, Bundle params) 
           throws MalformedURLException, IOException, URISyntaxException {
      // random string as boundary for multi-part http post
         String strBoundary = "3i2ndDfv2rTHiSisAbouNdArYfORhtTPEefj3q2f";
@@ -155,7 +153,7 @@ public final class Util {
         }
         else {
             HttpPost postRequest = new HttpPost(url);
-            ByteArrayBuffer data = new ByteArrayBuffer(10);
+            ByteArrayBuffer data = new ByteArrayBuffer(1024);
 
             Bundle dataparams = new Bundle();
             for (String key : params.keySet()) {
@@ -198,7 +196,8 @@ public final class Util {
 
         HttpResponse httpResponse  = httpClient.execute(request);
         HttpEntity entity = httpResponse.getEntity();
-        String response = read(entity.getContent());
+        byte[] response = EntityUtils.toByteArray(entity);
+
         entity.consumeContent();
         return (response);
     }
@@ -206,16 +205,6 @@ public final class Util {
     private static void appendStringToByteArrayBuffer(String s, ByteArrayBuffer baf)
     {
         baf.append(s.getBytes(), 0, s.length());
-    }
-
-    private static String read(InputStream in) throws IOException {
-        StringBuilder sb = new StringBuilder();
-        BufferedReader r = new BufferedReader(new InputStreamReader(in), 1000);
-        for (String line = r.readLine(); line != null; line = r.readLine()) {
-            sb.append(line);
-        }
-        in.close();
-        return sb.toString();
     }
 
     public static void clearCookies(Context context) {
