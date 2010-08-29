@@ -2,7 +2,7 @@ package com.facebook.android;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 
 import android.util.Log;
 
@@ -30,7 +30,7 @@ public abstract class BaseRequestListener implements RequestListener {
         e.printStackTrace();
     }
 
-    public void onMalformedURLException(MalformedURLException e) {
+    public void onURISyntaxException(URISyntaxException e) {
         Log.e("Facebook", e.getMessage());
         e.printStackTrace();
     }

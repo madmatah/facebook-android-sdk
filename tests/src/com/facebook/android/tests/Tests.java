@@ -2,7 +2,7 @@ package com.facebook.android.tests;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URLEncoder;
 
 import org.json.JSONObject;
@@ -501,7 +501,8 @@ public class Tests extends Activity {
             e.printStackTrace();
         }
 
-        public void onMalformedURLException(MalformedURLException e) {
+        public void onURISyntaxException(URISyntaxException e)
+        {
             e.printStackTrace();
         }
     }
