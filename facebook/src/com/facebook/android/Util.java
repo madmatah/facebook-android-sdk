@@ -16,19 +16,22 @@
 
 package com.facebook.android;
 
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.entity.ByteArrayEntity;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.util.ByteArrayBuffer;
+import org.apache.http.util.EntityUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -119,37 +122,41 @@ public final class Util {
         }
     }
 
-    
     /**
      * Connect to an HTTP URL and return the response as a string.
-     *
+     * 
      * Note that the HTTP method override is used on non-GET requests. (i.e.
      * requests are made as "POST" with method specified in the body).
-     *
+     * 
      * @param url - the resource to open: must be a welformed URL
      * @param method - the HTTP method to use ("GET", "POST", etc.)
      * @param params - the query parameter for the URL (e.g. access_token=foo)
-     * @return the URL contents as a String
-     * @throws MalformedURLException - if the URL format is invalid
+     * @return the URL contents as a byte array
      * @throws IOException - if a network problem occurs
+     * @throws URISyntaxException - if the URL format is invalid
      */
-    public static String openUrl(String url, String method, Bundle params)
-          throws MalformedURLException, IOException {
-        // random string as boundary for multi-part http post
+    public static byte[] openUrl(String url, String method, Bundle params) 
+          throws MalformedURLException, IOException, URISyntaxException {
+     // random string as boundary for multi-part http post
         String strBoundary = "3i2ndDfv2rTHiSisAbouNdArYfORhtTPEefj3q2f";
         String endLine = "\r\n";
-
-        OutputStream os;
 
         if (method.equals("GET")) {
             url = url + "?" + encodeUrl(params);
         }
         Log.d("Facebook-Util", method + " URL: " + url);
-        HttpURLConnection conn =
-            (HttpURLConnection) new URL(url).openConnection();
-        conn.setRequestProperty("User-Agent", System.getProperties().
+        DefaultHttpClient httpClient = new DefaultHttpClient();
+        httpClient.getParams().setBooleanParameter("http.protocol.expect-continue", false);
+        httpClient.getParams().setParameter("http.useragent", System.getProperties().
                 getProperty("http.agent") + " FacebookAndroidSDK");
-        if (!method.equals("GET")) {
+        HttpUriRequest request;
+        if (method.equals("GET")) {
+            request = new HttpGet(url);
+        }
+        else {
+            HttpPost postRequest = new HttpPost(url);
+            ByteArrayBuffer data = new ByteArrayBuffer(1024);
+
             Bundle dataparams = new Bundle();
             for (String key : params.keySet()) {
                 if (params.getByteArray(key) != null) {
@@ -161,58 +168,45 @@ public final class Util {
             if (!params.containsKey("method")) {
                 params.putString("method", method);
             }
-
+            
             if (params.containsKey("access_token")) {
-                String decoded_token =
-                    URLDecoder.decode(params.getString("access_token"));
+                String decoded_token = URLDecoder.decode(params.getString("access_token"));
                 params.putString("access_token", decoded_token);
             }
-
-            conn.setRequestMethod("POST");
-            conn.setRequestProperty(
-                    "Content-Type",
-                    "multipart/form-data;boundary="+strBoundary);
-            conn.setDoOutput(true);
-            conn.setDoInput(true);
-            conn.setRequestProperty("Connection", "Keep-Alive");
-            conn.connect();
-            os = new BufferedOutputStream(conn.getOutputStream());
-
-            os.write(("--" + strBoundary +endLine).getBytes());
-            os.write((encodePostBody(params, strBoundary)).getBytes());
-            os.write((endLine + "--" + strBoundary + endLine).getBytes());
-
+            
+            appendStringToByteArrayBuffer("--" + strBoundary +endLine, data);
+            appendStringToByteArrayBuffer(encodePostBody(params, strBoundary), data);
+            appendStringToByteArrayBuffer(endLine + "--" + strBoundary + endLine, data);
+            
             if (!dataparams.isEmpty()) {
 
                 for (String key: dataparams.keySet()){
-                    os.write(("Content-Disposition: form-data; filename=\"" + key + "\"" + endLine).getBytes());
-                    os.write(("Content-Type: content/unknown" + endLine + endLine).getBytes());
-                    os.write(dataparams.getByteArray(key));
-                    os.write((endLine + "--" + strBoundary + endLine).getBytes());
-
+                    appendStringToByteArrayBuffer("Content-Disposition: form-data; filename=\"" + key + "\"" + endLine, data);
+                    appendStringToByteArrayBuffer("Content-Type: content/unknown" + endLine + endLine, data);
+                    final byte[] dataparam = dataparams.getByteArray(key);
+                    data.append(dataparam, 0, dataparam.length);
+                    appendStringToByteArrayBuffer(endLine + "--" + strBoundary + endLine, data);
                 }
             }
-            os.flush();
+
+            ByteArrayEntity entity = new ByteArrayEntity(data.buffer());
+            postRequest.removeHeaders("Content-Length");
+            postRequest.setHeader("Content-Type", "multipart/form-data;boundary="+strBoundary);
+            postRequest.setEntity(entity);
+            request = postRequest;
         }
 
-        String response = "";
-        try {
-            response = read(conn.getInputStream());
-        } catch (FileNotFoundException e) {
-            // Error Stream contains JSON that we can parse to a FB error
-            response = read(conn.getErrorStream());
-        }
-        return response;
+        HttpResponse httpResponse  = httpClient.execute(request);
+        HttpEntity entity = httpResponse.getEntity();
+        byte[] response = EntityUtils.toByteArray(entity);
+
+        entity.consumeContent();
+        return (response);
     }
 
-    private static String read(InputStream in) throws IOException {
-        StringBuilder sb = new StringBuilder();
-        BufferedReader r = new BufferedReader(new InputStreamReader(in), 1000);
-        for (String line = r.readLine(); line != null; line = r.readLine()) {
-            sb.append(line);
-        }
-        in.close();
-        return sb.toString();
+    private static void appendStringToByteArrayBuffer(String s, ByteArrayBuffer baf)
+    {
+        baf.append(s.getBytes(), 0, s.length());
     }
 
     public static void clearCookies(Context context) {

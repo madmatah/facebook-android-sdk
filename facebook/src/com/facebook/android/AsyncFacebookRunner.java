@@ -19,6 +19,7 @@ package com.facebook.android;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 
 import android.content.Context;
 import android.os.Bundle;
@@ -89,11 +90,11 @@ public class AsyncFacebookRunner {
                     listener.onComplete(response, state);
                 } catch (FileNotFoundException e) {
                     listener.onFileNotFoundException(e, state);
-                } catch (MalformedURLException e) {
-                    listener.onMalformedURLException(e, state);
                 } catch (IOException e) {
                     listener.onIOException(e, state);
-                }
+                } catch (URISyntaxException e) {
+                	listener.onURISyntaxException(e, state);
+				}
             }
         }.start();
     }
@@ -254,8 +255,8 @@ public class AsyncFacebookRunner {
                     listener.onComplete(resp, state);
                 } catch (FileNotFoundException e) {
                     listener.onFileNotFoundException(e, state);
-                } catch (MalformedURLException e) {
-                    listener.onMalformedURLException(e, state);
+                } catch (URISyntaxException e) {
+                    listener.onURISyntaxException(e, state);
                 } catch (IOException e) {
                     listener.onIOException(e, state);
                 }
@@ -301,8 +302,7 @@ public class AsyncFacebookRunner {
          *
          * Executed by a background thread: do not update the UI in this method.
          */
-        public void onMalformedURLException(MalformedURLException e,
-                                            Object state);
+        public void onURISyntaxException(URISyntaxException e, Object state);
 
         /**
          * Called when the server-side Facebook method fails.

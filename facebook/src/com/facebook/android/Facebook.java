@@ -19,6 +19,7 @@ package com.facebook.android;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 
 import android.Manifest;
 import android.app.Activity;
@@ -425,9 +426,10 @@ public class Facebook {
      * @throws MalformedURLException
      * @return JSON string representation of the auth.expireSession response
      *            ("true" if successful)
+     * @throws URISyntaxException 
      */
     public String logout(Context context)
-            throws MalformedURLException, IOException {
+            throws MalformedURLException, IOException, URISyntaxException {
         Util.clearCookies(context);
         Bundle b = new Bundle();
         b.putString("method", "auth.expireSession");
@@ -464,9 +466,10 @@ public class Facebook {
      * @throws IllegalArgumentException
      *            if one of the parameters is not "method"
      * @return JSON string representation of the response
+     * @throws URISyntaxException 
      */
     public String request(Bundle parameters)
-            throws MalformedURLException, IOException {
+            throws MalformedURLException, IOException, URISyntaxException {
         if (!parameters.containsKey("method")) {
             throw new IllegalArgumentException("API method must be specified. "
                     + "(parameters must contain key \"method\" and value). See"
@@ -490,9 +493,10 @@ public class Facebook {
      * @throws IOException
      * @throws MalformedURLException
      * @return JSON string representation of the response
+     * @throws URISyntaxException 
      */
     public String request(String graphPath)
-            throws MalformedURLException, IOException {
+            throws MalformedURLException, IOException, URISyntaxException {
         return request(graphPath, new Bundle(), "GET");
     }
 
@@ -517,9 +521,10 @@ public class Facebook {
      * @throws IOException
      * @throws MalformedURLException
      * @return JSON string representation of the response
+     * @throws URISyntaxException 
      */
     public String request(String graphPath, Bundle parameters)
-            throws MalformedURLException, IOException {
+            throws MalformedURLException, IOException, URISyntaxException {
         return request(graphPath, parameters, "GET");
     }
 
@@ -547,9 +552,42 @@ public class Facebook {
      * @throws IOException
      * @throws MalformedURLException
      * @return JSON string representation of the response
+     * @throws URISyntaxException 
      */
-    public String request(String graphPath, Bundle params, String httpMethod)
-            throws FileNotFoundException, MalformedURLException, IOException {
+	    public String request(String graphPath, Bundle params, String httpMethod)
+	            throws MalformedURLException, IOException, URISyntaxException {
+	        return new String (requestBinary(graphPath, params, httpMethod));
+	    }
+
+    
+    /**
+     * Synchronously make a request to the Facebook Graph API with the given
+     * HTTP method and string parameters. Note that binary data parameters
+     * (e.g. pictures) are not yet supported by this helper function.
+     *
+     * See http://developers.facebook.com/docs/api
+     *
+     * Note that this method blocks waiting for a network response, so do not
+     * call it in a UI thread.
+     *
+     * @param graphPath
+     *            Path to resource in the Facebook graph, e.g., to fetch data
+     *            about the currently logged authenticated user, provide "me",
+     *            which will fetch http://graph.facebook.com/me
+     * @param params
+     *            Key-value string parameters, e.g. the path "search" with
+     *            parameters {"q" : "facebook"} would produce a query for the
+     *            following graph resource:
+     *            https://graph.facebook.com/search?q=facebook
+     * @param httpMethod
+     *            http verb, e.g. "GET", "POST", "DELETE"
+     * @throws IOException
+     * @throws MalformedURLException
+     * @return JSON string representation of the response
+     * @throws URISyntaxException 
+     */
+    public byte[] requestBinary(String graphPath, Bundle params, String httpMethod)
+            throws MalformedURLException, IOException, URISyntaxException {
         params.putString("format", "json");
         if (isSessionValid()) {
             params.putString(TOKEN, getAccessToken());
