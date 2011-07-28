@@ -18,16 +18,16 @@ package com.facebook.stream;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.util.Log;
 
+import com.facebook.android.AsyncFacebookRunner.RequestListener;
 import com.facebook.android.FacebookError;
 import com.facebook.android.Util;
-import com.facebook.android.AsyncFacebookRunner.RequestListener;
 
 abstract class AsyncRequestListener implements RequestListener {
 
@@ -59,7 +59,7 @@ abstract class AsyncRequestListener implements RequestListener {
         Log.e("stream", "Network Error:" + e.getMessage());      
     }
 
-    public void onMalformedURLException(MalformedURLException e,
+    public void onURISyntaxException(URISyntaxException e,
                                         final Object state) {
         Log.e("stream", "Invalid URL:" + e.getMessage());            
     }

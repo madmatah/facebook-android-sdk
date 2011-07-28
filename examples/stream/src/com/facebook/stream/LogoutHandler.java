@@ -18,14 +18,14 @@ package com.facebook.stream;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 
 import android.util.Log;
 
 import com.facebook.android.AsyncFacebookRunner;
+import com.facebook.android.AsyncFacebookRunner.RequestListener;
 import com.facebook.android.Facebook;
 import com.facebook.android.FacebookError;
-import com.facebook.android.AsyncFacebookRunner.RequestListener;
 
 /**
  * A handler for the logout link. This handler doesn't render
@@ -62,7 +62,7 @@ public class LogoutHandler extends Handler {
                 dispatcher.runHandler("login");            
             }
 
-            public void onMalformedURLException(MalformedURLException error,
+            public void onURISyntaxException(URISyntaxException error,
                                                 final Object state) {
                 Log.e("app", error.toString());
                 dispatcher.runHandler("login");

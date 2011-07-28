@@ -18,7 +18,7 @@ package com.facebook.stream;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -26,10 +26,10 @@ import org.json.JSONObject;
 import android.util.Log;
 
 import com.facebook.android.AsyncFacebookRunner;
+import com.facebook.android.AsyncFacebookRunner.RequestListener;
 import com.facebook.android.Facebook;
 import com.facebook.android.FacebookError;
 import com.facebook.android.Util;
-import com.facebook.android.AsyncFacebookRunner.RequestListener;
 
 /**
  * A handler for the stream page. It's responsible for
@@ -109,7 +109,7 @@ public class StreamHandler extends Handler {
             Log.e("stream", "Network Error:" + e.getMessage());      
         }
 
-        public void onMalformedURLException(MalformedURLException e,
+        public void onURISyntaxException(URISyntaxException e,
                                             final Object state) {
             Log.e("stream", "Invalid URL:" + e.getMessage());            
         }
